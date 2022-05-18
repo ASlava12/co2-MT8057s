@@ -12,6 +12,14 @@ sudo pip install --upgrade setuptools
 sudo pip install hidapi
 ```
 
+# Push metric in database
+
+```
+$ cp config.py.example config.py
+
+$ sudo python3.8 monitoring_co2.py
+```
+
 # using
 
 ```

@@ -21,17 +21,16 @@ def get_data(debug: bool = False):
     co2.open(VENDOR_ID, PRODUCT_ID)
     try:
         result = {}
-        zero_len = 0
 
         while len(result) < 2:
-            # hack for initialize device
-            co2.send_feature_report(co2.get_feature_report(0,4))
             data = co2.read(BYTES_READ, 1000)
+
             if debug:
                 print(data, len(data))
-            
+
             if len(data) == 0:
-                zero_len += 1
+                # hack for initialize device
+                co2.send_feature_report(co2.get_feature_report(0,4))
                 continue
 
             code = data[0]
@@ -44,22 +43,25 @@ def get_data(debug: bool = False):
                 pass
 
             if check_sum != check_value:
-                co2.close()
-                raise ValueError(f"Checksum error: {data} | {check_sum=} | {check_value=}")
+                if debug:
+                    print(f"Checksum error: {data} | {check_sum=} | {check_value=}")
+                continue
 
             if point != EXPECTED_POINT:
-                co2.close()
-                raise ValueError(f"Unexpected data from device: {data}")
+                if debug:
+                    print(f"Unexpected data from device: {data}")
+                continue
 
             if code == CODE_TAMB:
                 result["temp"] = round(celsium(value), 1)
 
             if code == CODE_CNTR:
                 result["co2"] = value
-    except Exception as e:
-        co2.close()
-        raise e
 
-    co2.close()
+    except Exception as e:
+        raise e
+    finally:
+        co2.close()
+
     result['time'] = datetime.fromtimestamp(time())
     return result
